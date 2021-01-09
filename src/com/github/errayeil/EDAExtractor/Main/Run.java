@@ -4,7 +4,6 @@ import com.github.errayeil.EDAExtractor.Extractor.NameExtractor;
 import com.opencsv.exceptions.CsvValidationException;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 
 public class Run {
@@ -23,7 +22,7 @@ public class Run {
         NameExtractor extractor = new NameExtractor( null);
 
         try {
-            extractor.extractNames();
+            extractor.updateNames();
         } catch ( IOException | CsvValidationException e ) {
             e.printStackTrace( );
         }

@@ -84,6 +84,11 @@ public class ExtractorWriter {
                 if (name != null) {
                     name = name.toUpperCase();
                     String letter = name.substring( 0, 1 );
+
+                    if (letter.equals( "*" )) {
+                        letter = name.substring( 0, 3 );
+                    }
+
                     boolean isNumeric = letter.chars( ).allMatch( Character::isDigit );
 
                     if(isNumeric) {

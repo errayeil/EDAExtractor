@@ -3,11 +3,9 @@ package com.github.errayeil.EDAExtractor.Extractor;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Locale;
 
 /**
  * Extracts all system names from the eddb systems csv file. The system names are stored in files according to the first
@@ -76,7 +74,7 @@ public class NameExtractor {
     /**
      * Starts the extraction process. This includes downloading the systems.csv files if it does not exist.
      */
-    public void extractNames( ) throws IOException, CsvValidationException {
+    public void startExtraction( ) throws IOException, CsvValidationException {
         File systemsCSVFile = new File( parentFolder.getAbsolutePath( )
                 + File.separator
                 + "systems.csv");
@@ -93,13 +91,13 @@ public class NameExtractor {
             }
         }
 
-        startNameExtraction( );
+        extractNames( );
     }
 
     /**
      *
      */
-    public void updateNameFiles( ) throws IOException, CsvValidationException {
+    public void updateNames( ) throws IOException, CsvValidationException {
         File updatedSystemsFile = new File( parentFolder.getAbsolutePath( )
                 + File.separator
                 + "updatedSystems.csv" );
@@ -107,77 +105,16 @@ public class NameExtractor {
         if ( !updatedSystemsFile.exists( ) ) {
             System.out.println( "Created updated systems file." );
             updatedSystemsFile.createNewFile( );
+            downloadFile( new URL( updateSystemsURL ), updatedSystemsFile );
         }
 
-        downloadFile( new URL( updateSystemsURL ), updatedSystemsFile );
-
-
-    }
-
-    /**
-     *
-     * @param updatedSystemsFile
-     */
-    private void writeUpdates(File updatedSystemsFile) throws IOException, CsvValidationException {
-        try ( CSVReader reader = new CSVReader( new FileReader( updatedSystemsFile ) ) ) {
-            String[] array;
-
-            while ( ( array = reader.readNext( ) ) != null ) {
-                String name = array[ 2 ].toUpperCase( );
-                File file = getFileForLetter( name.substring( 0, 1 ) );
-
-                try ( BufferedReader buffered = new BufferedReader( new FileReader( file ) ) ) {
-                    String line;
-                    boolean broke = false;
-                    while ( ( line = buffered.readLine( ) ) != null ) {
-                        if ( line.equals( name ) ) {
-                            broke = true;
-                            break;
-                        }
-                    }
-
-                    buffered.close( );
-
-                    if ( !broke ) {
-                        try ( BufferedWriter write = new BufferedWriter( new FileWriter( file, true ) ) ) {
-                            System.out.println( "Writing name: " + name + " to file: " + file.getName( ) );
-                            write.write( name );
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Downloads the systems.csv file from eddb.io.
-     */
-    private void downloadFile( URL url, File file ) throws IOException {
-        if ( !file.exists( ) )
-            file.createNewFile( );
-
-        URLConnection connection = url.openConnection( );
-        double size = connection.getContentLengthLong();
-
-        try ( BufferedInputStream in = new BufferedInputStream( connection.getInputStream());
-              FileOutputStream fout = new FileOutputStream( file ) ) {
-
-            final byte[] data = new byte[ 4096 ];
-            int count;
-            double read = 0.0;
-            while ( ( count = in.read( data, 0, 4000 ) ) != -1 ) {
-                fout.write( data, 0, count );
-                read += count;
-                System.out.println("Percentage complete: " + (read / size) * 100 + "%");
-            }
-        }
-
+        writeUpdates( updatedSystemsFile );
     }
 
     /**
      * Pulls names from the systems.csv file.
      */
-    private void startNameExtraction( ) throws IOException, CsvValidationException {
+    private void extractNames( ) throws IOException, CsvValidationException {
         long startTime = System.nanoTime( );
 
         String path = parentFolder.getAbsolutePath( ) + File.separator;
@@ -207,6 +144,69 @@ public class NameExtractor {
     }
 
     /**
+     * Downloads the systems.csv file or updatedSystems file from eddb.io.
+     */
+    private void downloadFile( URL url, File file ) throws IOException {
+        if ( !file.exists( ) )
+            file.createNewFile( );
+
+        URLConnection connection = url.openConnection( );
+        double size = connection.getContentLengthLong();
+
+        try ( BufferedInputStream in = new BufferedInputStream( connection.getInputStream());
+              FileOutputStream fout = new FileOutputStream( file ) ) {
+
+            final byte[] data = new byte[ 4096 ];
+            int count;
+            double read = 0.0;
+            while ( ( count = in.read( data, 0, 4000 ) ) != -1 ) {
+                fout.write( data, 0, count );
+                read += count;
+                System.out.println("Percentage complete: " + (read / size) * 100 + "%");
+            }
+        }
+
+    }
+
+    /**
+     *
+     * @param updatedSystemsFile
+     */
+    private void writeUpdates(File updatedSystemsFile) throws IOException, CsvValidationException {
+        try ( CSVReader reader = new CSVReader( new FileReader( updatedSystemsFile ) ) ) {
+            String[] array;
+
+            while ( ( array = reader.readNext( ) ) != null ) {
+                String name = array[ 2 ].toUpperCase( );
+                System.out.println("Got name: " + name);
+                File file = getFileForLetter( name.substring( 0, 1 ) );
+
+                try ( BufferedReader buffered = new BufferedReader( new FileReader( file ) ) ) {
+                    String line;
+                    boolean broke = false;
+
+                    while ( ( line = buffered.readLine( ) ) != null ) {
+                        if ( line.equals( name ) ) {
+                            System.out.println("Comparing.");
+                            line = null;
+                            broke = true;
+                        }
+                    }
+
+                    buffered.close( );
+
+                    if ( !broke ) {
+                        try ( BufferedWriter write = new BufferedWriter( new FileWriter( file, true ) ) ) {
+                            System.out.println( "Writing name: " + name + " to file: " + file.getName( ) );
+                            write.write( name );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Creates the name files for alphabetical and numerical storage.
      */
     private void createNameFiles( ) {
@@ -221,26 +221,6 @@ public class NameExtractor {
                 } catch ( IOException e ) {
                     e.printStackTrace( );
                 }
-            }
-        }
-    }
-
-    /**
-     * Writes the specified system name to the correct file.
-     *
-     * @param name The system name.
-     *
-     * @throws IOException Thrown when an error occurs during the write process.
-     */
-    private void writeNameToFile( String name ) throws IOException {
-        String letter = name.substring( 0, 1 );
-        File file = getFileForLetter( letter );
-
-        if ( file.exists( ) ) {
-            System.out.println( "Writing name: " + name + " to file: " + file.getName( ) );
-            try ( BufferedWriter bWriter = new BufferedWriter( new FileWriter( file, true ) ) ) {
-                bWriter.write( name );
-                bWriter.newLine( );
             }
         }
     }
