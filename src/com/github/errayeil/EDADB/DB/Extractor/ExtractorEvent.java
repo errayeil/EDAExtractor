@@ -1,4 +1,4 @@
-package com.github.errayeil.EDAExtractor.Extractor;
+package com.github.errayeil.EDADB.DB.Extractor;
 
 
 public class ExtractorEvent {

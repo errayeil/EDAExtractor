@@ -9,5 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="org.apache.httpcomponents:httpclient:4.5.13" level="project" />
     <orderEntry type="library" name="com.opencsv:opencsv:5.3" level="project" />
+    <orderEntry type="library" name="org.mapdb:mapdb:3.0.8" level="project" />
+    <orderEntry type="library" name="me.tongfei:progressbar:0.9.0" level="project" />
   </component>
 </module>
